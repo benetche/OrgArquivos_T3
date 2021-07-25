@@ -39,6 +39,7 @@ int main(void) {
 
     vehicleRecord *veiculoCorrente;
     lineRecord *linhaCorrente;
+    int encontrado = 0;
 
     if (!vf) {
       printf("Falha no processamento do arquivo.\n");
@@ -57,12 +58,15 @@ int main(void) {
         fseek(lf->fp, 82, SEEK_SET);
         for (int j = 0; j < lf->nRecords; j++) {
           readLineReg(lf->fp, linhaCorrente);
-          if (comparaRegistros(linhaCorrente, veiculoCorrente) == 1) {
+          if(comparaRegistros(linhaCorrente, veiculoCorrente) == 1) {
+            encontrado++;
             printMerged(linhaCorrente, lf->header, veiculoCorrente, vf->header);
             break;
           }
         }
       }
+      if(encontrado == 0)
+        printf("Registro inexistente.\n");
     }
   }
 
