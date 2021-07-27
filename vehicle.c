@@ -1,11 +1,12 @@
 /*
-Autores: 
+Autores:
 -Eduardo Amaral - NUSP 11735021
 -Vitor Beneti Martins - NUSP 11877635
 */
+#include "vehicle.h"
+#include "bTree.h"
 #include "util.h"
 #include "vehicleUtils.h"
-#include "bTree.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -529,10 +530,11 @@ void insertVehicles(int n, vehicleFile *vf) {
  * @brief Le um registro a ser inserido e o insere no arquivo de registro
  * de veiculo
  * @param vf
- * @return retorna o registro lido e inserido para poder ser inserido na arvore B
+ * @return retorna o registro lido e inserido para poder ser inserido na arvore
+ * B
  */
 
-vehicleRecord* insertOneVehicle(vehicleFile *vf){
+vehicleRecord *insertOneVehicle(vehicleFile *vf) {
   fseek(vf->fp, vf->header->byteProxReg, SEEK_SET);
 
   vehicleRecord *vr = (vehicleRecord *)malloc(sizeof(vehicleRecord));
@@ -596,4 +598,64 @@ vehicleRecord* insertOneVehicle(vehicleFile *vf){
   writeVehicleReg(vf->fp, vr);
 
   return vr;
+}
+
+int compareVehicleRecords(const void *a, const void *b) {
+  vehicleRecord *recordA = *(vehicleRecord **)a;
+  vehicleRecord *recordB = *(vehicleRecord **)b;
+
+  if (recordA->removido == '0') {
+    return 1;
+  }
+
+  if (recordB->removido == '0') {
+    return -1;
+  }
+
+  return recordA->codLinha - recordB->codLinha;
+}
+
+void copyOrderedVehicleRecords(vehicleFile *src, vehicleFile *dest) {
+  qsort(src->records, src->nRecords, sizeof(vehicleRecord *),
+        compareVehicleRecords);
+
+  dest->header->nroRegRemovidos = 0;
+  dest->nRecords = dest->header->nroRegistros = src->header->nroRegistros;
+
+  dest->header->descreveCategoria = (char *)malloc(
+      sizeof(char) * (strlen(src->header->descreveCategoria) + 1));
+  strcpy(dest->header->descreveCategoria, src->header->descreveCategoria);
+
+  dest->header->descreveData =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveData) + 1));
+  strcpy(dest->header->descreveData, src->header->descreveData);
+
+  dest->header->descreveLinha =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveLinha) + 1));
+  strcpy(dest->header->descreveLinha, src->header->descreveLinha);
+
+  dest->header->descreveLugares =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveLugares) + 1));
+  strcpy(dest->header->descreveLugares, src->header->descreveLugares);
+
+  dest->header->descreveModelo =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveModelo) + 1));
+  strcpy(dest->header->descreveModelo, src->header->descreveModelo);
+
+  dest->header->descrevePrefixo =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descrevePrefixo) + 1));
+  strcpy(dest->header->descrevePrefixo, src->header->descrevePrefixo);
+
+  int i, totalSizeRemoved = 0;
+  for (i = src->header->nroRegistros; i < src->nRecords; i++) {
+    totalSizeRemoved += src->records[i]->tamanhoRegistro + 5;
+  }
+
+  dest->header->byteProxReg = src->header->byteProxReg - totalSizeRemoved;
+
+  dest->records = src->records;
+
+  writeVehicleFile(dest);
+
+  dest->records = NULL;
 }

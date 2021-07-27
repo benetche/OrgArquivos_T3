@@ -7,3 +7,5 @@ testZone/*
 vgcore*
 *.zip
 *.bin
+*.in
+*.out

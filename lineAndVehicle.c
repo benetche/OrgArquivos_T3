@@ -1,24 +1,18 @@
 #include "lineAndVehicle.h"
 #include "lineUtils.h"
+#include "util.h"
 #include "vehicleUtils.h"
 
-
-int comparaRegistros(lineRecord *linha, vehicleRecord *veiculo){
-    if(linha->removido == '1' && veiculo->removido == '1'){
-        if(linha->codLinha == veiculo->codLinha){
-            return 1;
-        }
-        else{
-            return 0;
-        }
-    }
-    else{
-        return 0;
-    }
+boolean comparaRegistros(lineRecord *linha, vehicleRecord *veiculo) {
+  if (linha->removido == '1' && veiculo->removido == '1') {
+    return linha->codLinha == veiculo->codLinha;
+  }
+  return false;
 }
 
-void printMerged(lineRecord *lr, lineFileHeader* lh,vehicleRecord *vr, vehicleFileHeader* vh){
-     if (vr->removido == '1') {
+void printMerged(lineRecord *lr, lineFileHeader *lh, vehicleRecord *vr,
+                 vehicleFileHeader *vh) {
+  if (vr->removido == '1') {
 
     printf("%s: ", vh->descrevePrefixo);
     printf("%s", vr->prefixo);
@@ -56,7 +50,7 @@ void printMerged(lineRecord *lr, lineFileHeader* lh,vehicleRecord *vr, vehicleFi
     }
     printf("\n");
   }
-    if (lr->removido == '1') {
+  if (lr->removido == '1') {
 
     printf("%s: ", lh->descreveCodigo);
     printf("%d", lr->codLinha);
@@ -86,5 +80,4 @@ void printMerged(lineRecord *lr, lineFileHeader* lh,vehicleRecord *vr, vehicleFi
     printf("\n");
     printf("\n");
   }
- 
 }

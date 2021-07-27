@@ -1,5 +1,5 @@
 /*
-Autores: 
+Autores:
 -Eduardo Amaral - NUSP 11735021
 -Vitor Beneti Martins - NUSP 11877635
 */
@@ -44,7 +44,7 @@ lineFile *createLineFileStruct(char *filename, char *mode) {
   }
 
   lf->header = (lineFileHeader *)malloc(sizeof(lineFileHeader));
-  if(strcmp(mode, "rb") == 0){
+  if (strcmp(mode, "rb") == 0) {
     lf->header->byteProxReg = 0;
     lf->header->nroRegRemovidos = lf->header->nroRegistros = 0;
   }
@@ -480,11 +480,11 @@ void insertLines(int n, lineFile *lf) {
  * @brief Le um registro a ser inserido e o insere no arquivo de registro
  * de linha
  * @param lf
- * @return retorna o registro lido e inserido para poder ser inserido na arvore B
+ * @return retorna o registro lido e inserido para poder ser inserido na arvore
+ * B
  */
 
-
-lineRecord *insertOneLine(lineFile *lf){
+lineRecord *insertOneLine(lineFile *lf) {
   fseek(lf->fp, lf->header->byteProxReg, SEEK_SET);
 
   lineRecord *lr = (lineRecord *)malloc(sizeof(lineRecord));
@@ -534,5 +534,55 @@ lineRecord *insertOneLine(lineFile *lf){
 
   writeLineReg(lf->fp, lr);
   return lr;
+}
 
+int compareLineRecords(const void *a, const void *b) {
+  lineRecord *recordA = *(lineRecord **)a;
+  lineRecord *recordB = *(lineRecord **)b;
+
+  if (recordA->removido == '0') {
+    return 1;
+  }
+
+  if (recordB->removido == '0') {
+    return -1;
+  }
+
+  return recordA->codLinha - recordB->codLinha;
+}
+
+void copyOrderedLineRecords(lineFile *src, lineFile *dest) {
+  qsort(src->records, src->nRecords, sizeof(lineRecord *), compareLineRecords);
+
+  dest->header->nroRegRemovidos = 0;
+  dest->nRecords = dest->header->nroRegistros = src->header->nroRegistros;
+
+  dest->header->descreveCartao =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveCartao) + 1));
+  strcpy(dest->header->descreveCartao, src->header->descreveCartao);
+
+  dest->header->descreveCodigo =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveCodigo) + 1));
+  strcpy(dest->header->descreveCodigo, src->header->descreveCodigo);
+
+  dest->header->descreveCor =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveCor) + 1));
+  strcpy(dest->header->descreveCor, src->header->descreveCor);
+
+  dest->header->descreveNome =
+      (char *)malloc(sizeof(char) * (strlen(src->header->descreveNome) + 1));
+  strcpy(dest->header->descreveNome, src->header->descreveNome);
+
+  int i, totalSizeRemoved = 0;
+  for (i = src->header->nroRegistros; i < src->nRecords; i++) {
+    totalSizeRemoved += src->records[i]->tamanhoRegistro + 5;
+  }
+
+  dest->header->byteProxReg = src->header->byteProxReg - totalSizeRemoved;
+
+  dest->records = src->records;
+
+  writeLineFile(dest);
+
+  dest->records = NULL;
 }

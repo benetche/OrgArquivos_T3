@@ -1,13 +1,13 @@
 /*
-Autores: 
+Autores:
 -Eduardo Amaral - NUSP 11735021
 -Vitor Beneti Martins - NUSP 11877635
 */
 #ifndef _VEHICLE_H_
 #define _VEHICLE_H_
 
-#include "util.h"
 #include "bTree.h"
+#include "util.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -91,5 +91,7 @@ void destroyVehicleRecord(vehicleRecord *v);
 vehicleRecord *insertOneVehicle(vehicleFile *vf);
 
 void writeVehicleFileHeader(vehicleFile *vf);
+
+void copyOrderedVehicleRecords(vehicleFile *src, vehicleFile *dest);
 
 #endif

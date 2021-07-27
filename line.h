@@ -1,5 +1,5 @@
 /*
-Autores: 
+Autores:
 -Eduardo Amaral - NUSP 11735021
 -Vitor Beneti Martins - NUSP 11877635
 */
@@ -78,5 +78,7 @@ lineRecord *insertOneLine(lineFile *lf);
 boolean printMatchingRecordsLine(lineFile *lf, char *field, char *val);
 
 void insertLines(int n, lineFile *lf);
+
+void copyOrderedLineRecords(lineFile *src, lineFile *dest);
 
 #endif
