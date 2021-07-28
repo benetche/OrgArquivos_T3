@@ -1,5 +1,5 @@
 /*
-Autores: 
+Autores:
 -Eduardo Amaral - NUSP 11735021
 -Vitor Beneti Martins - NUSP 11877635
 */
