@@ -604,6 +604,7 @@ int compareVehicleRecords(const void *a, const void *b) {
   vehicleRecord *recordA = *(vehicleRecord **)a;
   vehicleRecord *recordB = *(vehicleRecord **)b;
 
+  // Ifs responsáveis por colocar registros removidos no fim do vetor
   if (recordA->removido == '0') {
     return 1;
   }
@@ -612,16 +613,20 @@ int compareVehicleRecords(const void *a, const void *b) {
     return -1;
   }
 
+  // Compara registros pelo código da linha
   return recordA->codLinha - recordB->codLinha;
 }
 
 void copyOrderedVehicleRecords(vehicleFile *src, vehicleFile *dest) {
+  // Realiza o quick sort dos registros
   qsort(src->records, src->nRecords, sizeof(vehicleRecord *),
         compareVehicleRecords);
 
+  // Conta apenas registros que não estão logicamente removidos
   dest->header->nroRegRemovidos = 0;
   dest->nRecords = dest->header->nroRegistros = src->header->nroRegistros;
 
+  // Copia descrições do header
   dest->header->descreveCategoria = (char *)malloc(
       sizeof(char) * (strlen(src->header->descreveCategoria) + 1));
   strcpy(dest->header->descreveCategoria, src->header->descreveCategoria);
@@ -646,6 +651,7 @@ void copyOrderedVehicleRecords(vehicleFile *src, vehicleFile *dest) {
       (char *)malloc(sizeof(char) * (strlen(src->header->descrevePrefixo) + 1));
   strcpy(dest->header->descrevePrefixo, src->header->descrevePrefixo);
 
+  // Calcula proxByteOffset desconsiderando registros logicamente removidos
   int i, totalSizeRemoved = 0;
   for (i = src->header->nroRegistros; i < src->nRecords; i++) {
     totalSizeRemoved += src->records[i]->tamanhoRegistro + 5;
@@ -655,6 +661,7 @@ void copyOrderedVehicleRecords(vehicleFile *src, vehicleFile *dest) {
 
   dest->records = src->records;
 
+  // Escreve registros no arquivo .bin
   writeVehicleFile(dest);
 
   dest->records = NULL;

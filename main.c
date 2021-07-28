@@ -60,11 +60,11 @@ int main(void) {
       linhaCorrente = (lineRecord *)malloc(sizeof(lineRecord));
       encontrado = false;
 
-      //loop de juncao aninhado
+      // loop de juncao aninhado
       for (i = 0; i < vf->nRecords; i++) {
         readVehicleReg(vf->fp, veiculoCorrente);
-        //ir para o byte 82 (fim do header) todo loop para ler todos 
-        //os registros de linha novamente
+        // ir para o byte 82 (fim do header) todo loop para ler todos
+        // os registros de linha novamente
         fseek(lf->fp, 82, SEEK_SET);
         for (j = 0; j < lf->nRecords; j++) {
           readLineReg(lf->fp, linhaCorrente);
@@ -90,70 +90,65 @@ int main(void) {
     vf = createVehicleFileStruct(veiculoFileName, "rb");
     lf = createLineFileStruct(linhaFileName, "rb");
     arvore = criaArvoreB("arvoreLinha.bin", "wb+");
-    
-    //prevencao de erros de leitura do arquivo
-    if(!lf){
+
+    // prevencao de erros de leitura do arquivo
+    if (!lf) {
       printf("Falha no processamento do arquivo.\n");
-    }
-    else if(!vf){
+    } else if (!vf) {
       printf("Falha no processamento do arquivo.\n");
-    }
-    else if (!arvore) {
+    } else if (!arvore) {
       printf("Falha no processamento do arquivo.\n");
-    }
-    else{
+    } else {
 
       readVehicleFileHeader(vf);
-      readLineFileHeader(lf); 
+      readLineFileHeader(lf);
       vf->nRecords = vf->header->nroRegRemovidos + vf->header->nroRegistros;
       lf->nRecords = lf->header->nroRegRemovidos + lf->header->nroRegistros;
 
-      lineRecord *linhaCorrente = (lineRecord *) malloc(sizeof(lineRecord));
+      lineRecord *linhaCorrente = (lineRecord *)malloc(sizeof(lineRecord));
       int64_t offsetCorrente;
 
-      //criando arquivo arvoreB a partir dos registros de linha
-      for(i = 0; i < lf->nRecords; i++){
+      // criando arquivo arvoreB a partir dos registros de linha
+      for (i = 0; i < lf->nRecords; i++) {
 
         offsetCorrente = ftell(lf->fp);
         readLineReg(lf->fp, linhaCorrente);
 
-
-        if(linhaCorrente->removido == '1'){
+        if (linhaCorrente->removido == '1') {
 
           int32_t chave = linhaCorrente->codLinha;
           inserirNaArvoreB(arvore,
-          criaChavePonteiroPreenchida(chave, offsetCorrente));
-
+                           criaChavePonteiroPreenchida(chave, offsetCorrente));
         }
       }
 
-      vehicleRecord *veiculoCorrente = (vehicleRecord *) malloc(sizeof(vehicleRecord));
-      //juncao de loop unico
+      vehicleRecord *veiculoCorrente =
+          (vehicleRecord *)malloc(sizeof(vehicleRecord));
+      // juncao de loop unico
       encontrado = false;
-      for(i = 0; i < vf->nRecords; i++){
+      for (i = 0; i < vf->nRecords; i++) {
         readVehicleReg(vf->fp, veiculoCorrente);
-        //busca registros nao removidos
-        if(veiculoCorrente->removido == '1'){
+        // busca registros nao removidos
+        if (veiculoCorrente->removido == '1') {
 
-          int64_t offsetBuscado = buscaNaArvoreB(arvore, veiculoCorrente->codLinha);
-          //caso encontrado, printa os registros juntos
-          if(offsetBuscado != -1){
-            
+          int64_t offsetBuscado =
+              buscaNaArvoreB(arvore, veiculoCorrente->codLinha);
+          // caso encontrado, printa os registros juntos
+          if (offsetBuscado != -1) {
+
             encontrado = true;
             fseek(lf->fp, offsetBuscado, SEEK_SET);
             readLineReg(lf->fp, linhaCorrente);
             printMerged(linhaCorrente, lf->header, veiculoCorrente, vf->header);
-            
           }
-
         }
       }
-      //caso nenhum registro tenha sido recuperado
-      if(!encontrado){
+      // caso nenhum registro tenha sido recuperado
+      if (!encontrado) {
         printf("Registro inexistente.\n");
       }
 
-      //limpeza da RAM
+      // limpeza da RAM
       destroyVehicleRecord(veiculoCorrente);
       destroyLineRecord(linhaCorrente);
       destroiArvoreB(arvore);
@@ -172,6 +167,7 @@ int main(void) {
     } else {
       vfOrdered = createVehicleFileStruct(ordenadoFileName, "wb");
       readVehicleFile(vf, true);
+      // Copia registros de forma ordenada
       copyOrderedVehicleRecords(vf, vfOrdered);
       destroyVehicleFile(vf);
       destroyVehicleFile(vfOrdered);
@@ -187,6 +183,7 @@ int main(void) {
     } else {
       lfOrdered = createLineFileStruct(ordenadoFileName, "wb");
       readLineFile(lf, true);
+      // Copia registros de forma ordenada
       copyOrderedLineRecords(lf, lfOrdered);
       destroyLineFile(lf);
       destroyLineFile(lfOrdered);
@@ -211,6 +208,7 @@ int main(void) {
       printf("Falha no processamento do arquivo.\n");
     } else {
 
+      // Ordena ambos arquivos
       vfOrdered = createVehicleFileStruct("tmpVehicle.bin", "wb");
       readVehicleFile(vf, true);
       copyOrderedVehicleRecords(vf, vfOrdered);
@@ -223,6 +221,7 @@ int main(void) {
       destroyLineFile(lf);
       destroyLineFile(lfOrdered);
 
+      // Lê registros ordenados
       vf = createVehicleFileStruct("tmpVehicle.bin", "rb");
       lf = createLineFileStruct("tmpLine.bin", "rb");
 
@@ -237,8 +236,10 @@ int main(void) {
         readVehicleReg(vf->fp, veiculoCorrente);
         readLineReg(lf->fp, linhaCorrente);
 
+        // Lê registros enquanto linhas e veículos existem
         while (i < vf->nRecords && j < lf->nRecords) {
 
+          // Imprime merged todos veículos com código da linha corrente
           while (veiculoCorrente->codLinha == linhaCorrente->codLinha) {
             encontrado = true;
             printMerged(linhaCorrente, lf->header, veiculoCorrente, vf->header);
@@ -251,6 +252,8 @@ int main(void) {
             readVehicleReg(vf->fp, veiculoCorrente);
           }
 
+          // Pega o próximo registro de linha enquanto a linha do veículo
+          // corrente seja maior que a linha corrente
           while (veiculoCorrente->codLinha > linhaCorrente->codLinha) {
             j++;
             if (j >= lf->nRecords) {
@@ -261,6 +264,8 @@ int main(void) {
             readLineReg(lf->fp, linhaCorrente);
           }
 
+          // Pega o próximo registro de veículo enquanto a linha do veículo
+          // corrente seja menor que a linha corrente
           while (veiculoCorrente->codLinha < linhaCorrente->codLinha) {
             i++;
             if (i >= vf->nRecords) {

@@ -540,6 +540,7 @@ int compareLineRecords(const void *a, const void *b) {
   lineRecord *recordA = *(lineRecord **)a;
   lineRecord *recordB = *(lineRecord **)b;
 
+  // Ifs responsáveis por colocar registros removidos no fim do vetor
   if (recordA->removido == '0') {
     return 1;
   }
@@ -548,15 +549,20 @@ int compareLineRecords(const void *a, const void *b) {
     return -1;
   }
 
+  // Compara registros pelo código da linha
   return recordA->codLinha - recordB->codLinha;
 }
 
 void copyOrderedLineRecords(lineFile *src, lineFile *dest) {
+  // Realiza o quick sort dos registros
   qsort(src->records, src->nRecords, sizeof(lineRecord *), compareLineRecords);
+
+  // Conta apenas registros que não estão logicamente removidos
 
   dest->header->nroRegRemovidos = 0;
   dest->nRecords = dest->header->nroRegistros = src->header->nroRegistros;
 
+  // Copia descrições do header
   dest->header->descreveCartao =
       (char *)malloc(sizeof(char) * (strlen(src->header->descreveCartao) + 1));
   strcpy(dest->header->descreveCartao, src->header->descreveCartao);
@@ -578,10 +584,12 @@ void copyOrderedLineRecords(lineFile *src, lineFile *dest) {
     totalSizeRemoved += src->records[i]->tamanhoRegistro + 5;
   }
 
+  // Calcula proxByteOffset desconsiderando registros logicamente removidos
   dest->header->byteProxReg = src->header->byteProxReg - totalSizeRemoved;
 
   dest->records = src->records;
 
+  // Escreve registros no arquivo .bin
   writeLineFile(dest);
 
   dest->records = NULL;
