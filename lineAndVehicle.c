@@ -3,6 +3,12 @@
 #include "util.h"
 #include "vehicleUtils.h"
 
+/*
+Autores:
+-Eduardo Amaral - NUSP 11735021
+-Vitor Beneti Martins - NUSP 11877635
+*/
+
 boolean comparaRegistros(lineRecord *linha, vehicleRecord *veiculo) {
   if (linha->removido == '1' && veiculo->removido == '1') {
     return linha->codLinha == veiculo->codLinha;

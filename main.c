@@ -26,6 +26,7 @@ int main(void) {
   char *desordenadoFileName = (char *)malloc(sizeof(char) * 128);
   char *ordenadoFileName = (char *)malloc(sizeof(char) * 128);
 
+  arvoreB *arvore = NULL;
   int op;
   int i, j;
   boolean encontrado;
@@ -50,7 +51,7 @@ int main(void) {
     } else if (!lf) {
       printf("Falha no processamento do arquivo.\n");
     } else {
-      // Leia com readVehicleFile passando false no segundo argumento
+
       readVehicleFileHeader(vf);
       readLineFileHeader(lf);
       vf->nRecords = vf->header->nroRegRemovidos + vf->header->nroRegistros;
@@ -59,9 +60,11 @@ int main(void) {
       linhaCorrente = (lineRecord *)malloc(sizeof(lineRecord));
       encontrado = false;
 
+      //loop de juncao aninhado
       for (i = 0; i < vf->nRecords; i++) {
         readVehicleReg(vf->fp, veiculoCorrente);
-        // Explique porque 82
+        //ir para o byte 82 (fim do header) todo loop para ler todos 
+        //os registros de linha novamente
         fseek(lf->fp, 82, SEEK_SET);
         for (j = 0; j < lf->nRecords; j++) {
           readLineReg(lf->fp, linhaCorrente);
@@ -75,8 +78,91 @@ int main(void) {
       if (encontrado == false) {
         printf("Registro inexistente.\n");
       }
+      destroyVehicleRecord(veiculoCorrente);
+      destroyLineRecord(linhaCorrente);
+      destroyVehicleFile(vf);
+      destroyLineFile(lf);
     }
     break;
+
+  case 16:
+    scanf(" %s %s %*s", veiculoFileName, linhaFileName);
+    vf = createVehicleFileStruct(veiculoFileName, "rb");
+    lf = createLineFileStruct(linhaFileName, "rb");
+    arvore = criaArvoreB("arvoreLinha.bin", "wb+");
+    
+    //prevencao de erros de leitura do arquivo
+    if(!lf){
+      printf("Falha no processamento do arquivo.\n");
+    }
+    else if(!vf){
+      printf("Falha no processamento do arquivo.\n");
+    }
+    else if (!arvore) {
+      printf("Falha no processamento do arquivo.\n");
+    }
+    else{
+
+      readVehicleFileHeader(vf);
+      readLineFileHeader(lf); 
+      vf->nRecords = vf->header->nroRegRemovidos + vf->header->nroRegistros;
+      lf->nRecords = lf->header->nroRegRemovidos + lf->header->nroRegistros;
+
+      lineRecord *linhaCorrente = (lineRecord *) malloc(sizeof(lineRecord));
+      int64_t offsetCorrente;
+
+      //criando arquivo arvoreB a partir dos registros de linha
+      for(i = 0; i < lf->nRecords; i++){
+
+        offsetCorrente = ftell(lf->fp);
+        readLineReg(lf->fp, linhaCorrente);
+
+
+        if(linhaCorrente->removido == '1'){
+
+          int32_t chave = linhaCorrente->codLinha;
+          inserirNaArvoreB(arvore,
+          criaChavePonteiroPreenchida(chave, offsetCorrente));
+
+        }
+      }
+
+      vehicleRecord *veiculoCorrente = (vehicleRecord *) malloc(sizeof(vehicleRecord));
+      //juncao de loop unico
+      encontrado = false;
+      for(i = 0; i < vf->nRecords; i++){
+        readVehicleReg(vf->fp, veiculoCorrente);
+        //busca registros nao removidos
+        if(veiculoCorrente->removido == '1'){
+
+          int64_t offsetBuscado = buscaNaArvoreB(arvore, veiculoCorrente->codLinha);
+          //caso encontrado, printa os registros juntos
+          if(offsetBuscado != -1){
+            
+            encontrado = true;
+            fseek(lf->fp, offsetBuscado, SEEK_SET);
+            readLineReg(lf->fp, linhaCorrente);
+            printMerged(linhaCorrente, lf->header, veiculoCorrente, vf->header);
+            
+          }
+
+        }
+      }
+      //caso nenhum registro tenha sido recuperado
+      if(!encontrado){
+        printf("Registro inexistente.\n");
+      }
+
+      //limpeza da RAM
+      destroyVehicleRecord(veiculoCorrente);
+      destroyLineRecord(linhaCorrente);
+      destroiArvoreB(arvore);
+      destroyLineFile(lf);
+      destroyVehicleFile(vf);
+    }
+
+    break;
+
   case 17:
     scanf(" %s %s %*s", desordenadoFileName, ordenadoFileName);
     vf = createVehicleFileStruct(desordenadoFileName, "rb");
